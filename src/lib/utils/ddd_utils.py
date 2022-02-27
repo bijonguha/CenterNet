@@ -46,13 +46,15 @@ def compute_orientation_3d(dim, location, rotation_y):
                    np.array(location, dtype=np.float32).reshape(3, 1)
   return orientation_3d.transpose(1, 0)
 
-def draw_box_3d(image, corners, c=(0, 0, 255)):
+def draw_box_3d(image, corners, centroid_id, c=(0, 0, 255)):
   face_idx = [[0,1,5,4],
               [1,2,6, 5],
               [2,3,7,6],
               [3,0,4,7]]
+  face_idx = np.array(face_idx, dtype=int)
   for ind_f in range(3, -1, -1):
     f = face_idx[ind_f]
+    corners = np.array(corners, dtype=int)
     for j in range(4):
       cv2.line(image, (corners[f[j], 0], corners[f[j], 1]),
                (corners[f[(j+1)%4], 0], corners[f[(j+1)%4], 1]), c, 2, lineType=cv2.LINE_AA)
@@ -61,6 +63,17 @@ def draw_box_3d(image, corners, c=(0, 0, 255)):
                (corners[f[2], 0], corners[f[2], 1]), c, 1, lineType=cv2.LINE_AA)
       cv2.line(image, (corners[f[1], 0], corners[f[1], 1]),
                (corners[f[3], 0], corners[f[3], 1]), c, 1, lineType=cv2.LINE_AA)
+
+  BLACK = (255,255,255)
+  WHITE = (0,0,0)
+  font = cv2.FONT_HERSHEY_SIMPLEX
+  font_size = 0.5
+  font_color = BLACK
+  font_thickness = 1
+  x,y = np.mean(np.array(corners), axis=0)
+  cv2.putText(image, 'id-'+str(centroid_id), 
+  (int(x),int(y)), font, font_size, font_color, font_thickness, cv2.LINE_AA)
+
   return image
 
 def unproject_2d_to_3d(pt_2d, depth, P):
@@ -114,6 +127,11 @@ def project_3d_bbox(location, dim, rotation_y, calib):
   box_3d = compute_box_3d(dim, location, rotation_y)
   box_2d = project_to_image(box_3d, calib)
   return box_2d
+
+def project_3d_bbox_req(location, dim, rotation_y, calib):
+  box_3d = compute_box_3d(dim, location, rotation_y)
+  
+  return box_3d
 
 
 if __name__ == '__main__':

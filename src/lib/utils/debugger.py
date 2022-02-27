@@ -5,14 +5,13 @@ from __future__ import print_function
 import numpy as np
 import cv2
 from .ddd_utils import compute_box_3d, project_to_image, draw_box_3d
+import matplotlib.pyplot as plt
 
 class Debugger(object):
   def __init__(self, ipynb=False, theme='black', 
                num_classes=-1, dataset=None, down_ratio=4):
-    self.ipynb = ipynb
-    if not self.ipynb:
-      import matplotlib.pyplot as plt
-      self.plt = plt
+    self.ipynb = True
+    self.plt = plt
     self.imgs = {}
     self.theme = theme
     colors = [(color_list[_]).astype(np.uint8) \
@@ -225,18 +224,24 @@ class Debugger(object):
       fig=self.plt.figure(figsize=(nImgs * 10,10))
       nCols = nImgs
       nRows = nImgs // nCols
+
       for i, (k, v) in enumerate(self.imgs.items()):
         fig.add_subplot(1, nImgs, i + 1)
         if len(v.shape) == 3:
           self.plt.imshow(cv2.cvtColor(v, cv2.COLOR_BGR2RGB))
         else:
           self.plt.imshow(v)
-      self.plt.show()
+      fig.savefig('/content/CenterNet/exp/test_all_img.jpg', dpi=200)
+      fig.show()
 
-  def save_img(self, imgId='default', path='./cache/debug/'):
+      v = self.imgs['add_pred']
+      self.plt.imshow(cv2.cvtColor(v, cv2.COLOR_BGR2RGB))
+      self.plt.imsave('/content/CenterNet/exp/test_depth.jpg', cv2.cvtColor(v, cv2.COLOR_BGR2RGB))
+
+  def save_img(self, imgId='default', path='/content/CenterNet/exp/'):
     cv2.imwrite(path + '{}.png'.format(imgId), self.imgs[imgId])
     
-  def save_all_imgs(self, path='./cache/debug/', prefix='', genID=False):
+  def save_all_imgs(self, path='/content/CenterNet/exp/', prefix='', genID=False):
     if genID:
       try:
         idx = int(np.loadtxt(path + '/id.txt'))
@@ -326,8 +331,10 @@ class Debugger(object):
           # dim = dim / self.dim_scale
           if loc[2] > 1:
             box_3d = compute_box_3d(dim, loc, rot_y)
+            centroid = np.mean(np.array(box_3d), axis =0)
+            print('id-',i, centroid)
             box_2d = project_to_image(box_3d, calib)
-            self.imgs[img_id] = draw_box_3d(self.imgs[img_id], box_2d, cl)
+            self.imgs[img_id] = draw_box_3d(self.imgs[img_id], box_2d, i, cl)
 
   def compose_vis_add(
     self, img_path, dets, calib,

@@ -131,6 +131,16 @@ class BaseDetector(object):
       detections.append(dets)
     
     results = self.merge_outputs(detections)
+
+    if 1 in results.keys():
+      results.pop(1)
+    
+    if 3 in results.keys():
+      results.pop(3)
+      
+    import pdb
+    pdb.set_trace()
+    
     torch.cuda.synchronize()
     end_time = time.time()
     merge_time += end_time - post_process_time

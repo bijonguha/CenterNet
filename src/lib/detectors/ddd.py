@@ -55,6 +55,7 @@ class DddDetector(BaseDetector):
     return images, meta
   
   def process(self, images, return_time=False):
+
     with torch.no_grad():
       torch.cuda.synchronize()
       output = self.model(images)[-1]
@@ -67,12 +68,14 @@ class DddDetector(BaseDetector):
       
       dets = ddd_decode(output['hm'], output['rot'], output['dep'],
                           output['dim'], wh=wh, reg=reg, K=self.opt.K)
+
     if return_time:
       return output, dets, forward_time
     else:
       return output, dets
 
   def post_process(self, dets, meta, scale=1):
+
     dets = dets.detach().cpu().numpy()
     detections = ddd_post_process(
       dets.copy(), [meta['c']], [meta['s']], [meta['calib']], self.opt)
@@ -98,6 +101,7 @@ class DddDetector(BaseDetector):
       center_thresh=self.opt.vis_thresh, img_id='det_pred')
   
   def show_results(self, debugger, image, results):
+
     debugger.add_3d_detection(
       image, results, self.this_calib,
       center_thresh=self.opt.vis_thresh, img_id='add_pred')
